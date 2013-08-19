@@ -364,6 +364,7 @@ void set_irq_priority (int irq, int prio)
  ******************************************************************************/
 void pdb_isr(void)
 {
+	_lwevent_set(&gLWEvent,0x01);
 	PIN_TOGGLE                     // do this asap - show start of PDB cycle
 	TST12_LOW
 	PDB0_SC &= ~PDB_SC_PDBIF_MASK ;  // clear interrupt mask
@@ -382,6 +383,7 @@ void pdb_isr(void)
  ******************************************************************************/
 void adc0_isr(void)
 {
+	_lwevent_set(&gLWEvent,0x02);
 	TST13_LOW
 	if (( ADC0_SC1A & ADC_SC1_COCO_MASK ) == ADC_SC1_COCO_MASK)
 	{  // check which of the two conversions just triggered
@@ -412,6 +414,7 @@ void adc0_isr(void)
  ******************************************************************************/
 void adc1_isr(void)
 {
+	_lwevent_set(&gLWEvent,0x04);
 	TST14_LOW
 	if (( ADC1_SC1A & ADC_SC1_COCO_MASK ) == ADC_SC1_COCO_MASK) {  // check which of the two conversions just triggered
 		PIN2_HIGH                     // do this asap
