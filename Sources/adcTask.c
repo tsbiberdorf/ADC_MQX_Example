@@ -123,6 +123,10 @@ volatile static unsigned result0A,result0B,result1A,result1B;
  static LWEVENT_STRUCT gLWEvent;
 
 
+ typedef struct _adcTaskIrq_s
+ {
+	 int cnt;
+ }adcTaskIrq_s;
 
 /******************************************************************************
 Function 1. Name	AUTO CAL ROUTINE   
@@ -362,7 +366,7 @@ void set_irq_priority (int irq, int prio)
  * In:  n/a
  * Out: n/a
  ******************************************************************************/
-void pdb_isr(void)
+void pdb_isr(pointer user_isr_ptr)
 {
 	_lwevent_set(&gLWEvent,0x01);
 	PIN_TOGGLE                     // do this asap - show start of PDB cycle
@@ -381,7 +385,7 @@ void pdb_isr(void)
  * In:  n/a
  * Out: n/a
  ******************************************************************************/
-void adc0_isr(void)
+void adc0_isr(pointer user_isr_ptr)
 {
 	_lwevent_set(&gLWEvent,0x02);
 	TST13_LOW
@@ -412,7 +416,7 @@ void adc0_isr(void)
  * ping-pong.  That reading is filtered for an agregate of ADC1 readings: exponentially_filtered_result1
  * thus the filtered POT output is available for display.
  ******************************************************************************/
-void adc1_isr(void)
+void adc1_isr(pointer user_isr_ptr)
 {
 	_lwevent_set(&gLWEvent,0x04);
 	TST14_LOW
@@ -500,11 +504,14 @@ void adcTask()
 { 
 	float32_t diff; 
 	uint32_t i; 
-	
+	adcTaskIrq_s  isr_ptr;
+
+	_int_disable();
+
 	// Disable ADC and PDB interrupts
-	disable_irq(ADC0_irq_no) ;   // not ready for this interrupt yet. Plug vector first.
-	disable_irq(ADC1_irq_no) ;   // not ready for this interrupt yet. Plug vector first.
-	disable_irq(PDB_irq_no) ;    // not ready for this interrupt yet. Plug vector first.
+//	disable_irq(ADC0_irq_no) ;   // not ready for this interrupt yet. Plug vector first.
+//	disable_irq(ADC1_irq_no) ;   // not ready for this interrupt yet. Plug vector first.
+//	disable_irq(PDB_irq_no) ;    // not ready for this interrupt yet. Plug vector first.
 	Init_Gpio2();
 
 	// The System Integration Module largely determines the role of the different ball map locations on Kinetis.
@@ -677,13 +684,18 @@ void adcTask()
 	printf ("\n\n");
 
 	// Enable the ADC and PDB interrupts in NVIC
-	enable_irq(ADC0_irq_no) ;   // ready for this interrupt.
-	enable_irq(ADC1_irq_no) ;   // ready for this interrupt.
-	enable_irq(PDB_irq_no) ;    // ready for this interrupt.
+//	enable_irq(ADC0_irq_no) ;   // ready for this interrupt.
+//	enable_irq(ADC1_irq_no) ;   // ready for this interrupt.
+//	enable_irq(PDB_irq_no) ;    // ready for this interrupt.
 
-	// In case previous test did not end with interrupts enabled, enable used ones.
-	EnableInterrupts ;
+	_int_install_isr(INT_ADC0, adc0_isr,&isr_ptr);
+	_int_install_isr(INT_ADC1, adc1_isr,&isr_ptr);
+	_int_install_isr(INT_PDB0, pdb_isr,&isr_ptr);
+//	// In case previous test did not end with interrupts enabled, enable used ones.
+//	EnableInterrupts ;
 
+	_int_enable();
+	
 	PDB0_SC |= PDB_SC_SWTRIG_MASK ;    // kick off the PDB  - just once
 
 	//The system is now working!!!!  The PDB is *continuously* triggering ADC

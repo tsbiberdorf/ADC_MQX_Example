@@ -63,9 +63,9 @@
 
 uint8_t Hw_Trig_Test(void);
 
-extern void adc0_isr(void);  //  files have local isrs for ADC
-extern void adc1_isr(void);  
-extern void pdb_isr(void);
+extern void adc0_isr(pointer user_isr_ptr);
+extern void adc1_isr(pointer user_isr_ptr);  
+extern void pdb_isr(pointer user_isr_ptr);
 
 #endif  //__HW_TRIG_TEST_H
 
